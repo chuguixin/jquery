@@ -5,6 +5,14 @@ define([
 ], function( jQuery, support ) {
 
 jQuery.ajaxSettings.xhr = function() {
+	// Support: IE9+
+	// IE can't get local files with standard XHR, only ActiveX
+	if ( this.isLocal ) {
+		try {
+			return new ActiveXObject( "Microsoft.XMLHTTP" );
+		} catch( e ) {}
+	}
+
 	try {
 		return new XMLHttpRequest();
 	} catch( e ) {}
@@ -84,8 +92,8 @@ jQuery.ajaxTransport(function( options ) {
 								xhr.abort();
 							} else if ( type === "error" ) {
 								complete(
-									// file protocol always yields status 0, assume 404
-									xhr.status || 404,
+									// file: protocol always yields status 0; see #8605, #14207
+									xhr.status,
 									xhr.statusText
 								);
 							} else {
@@ -93,8 +101,8 @@ jQuery.ajaxTransport(function( options ) {
 									xhrSuccessStatus[ xhr.status ] || xhr.status,
 									xhr.statusText,
 									// Support: IE9
-									// #11426: When requesting binary data, IE9 will throw an exception
-									// on any attempt to access responseText
+									// Accessing binary-data responseText throws an exception
+									// (#11426)
 									typeof xhr.responseText === "string" ? {
 										text: xhr.responseText
 									} : undefined,
